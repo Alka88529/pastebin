@@ -9,11 +9,12 @@ const { getCurrentTimestamp } = require('../utils/utils');
 // Route to fetch paste content and serve HTML
 router.get('/p/:id', async (req, res) => {
     const pasteId = req.params.id;
-    const query = 'SELECT * FROM posts WHERE id = ?';
-    const updateQuery = 'UPDATE posts SET max_views = max_views - 1 WHERE id = ? AND max_views IS NOT NULL AND max_views > 0'; 
+    const query = 'SELECT * FROM posts WHERE id = $1';
+    const updateQuery = 'UPDATE posts SET max_views = max_views - 1 WHERE id = $1 AND max_views IS NOT NULL AND max_views > 0'; 
 
     try {
-        const [rows] = await db.execute(query, [pasteId]);
+        const result = await db.query(query, [pasteId]);
+        const rows = result.rows;
         console.log('Rows fetched:', rows);
         if (rows.length === 0) {
             return res.status(404).send('Post not found');
@@ -21,7 +22,7 @@ router.get('/p/:id', async (req, res) => {
         if (rows[0].max_views == 0) {
             return res.status(404).send('Paste has expired due to max views reached');
         }
-        const expires_at = ttl_seconds ? getCurrentTimestamp(req) + ttl_seconds * 1000 : null;
+        const expires_at = rows[0].ttl_seconds ? getCurrentTimestamp(req) + rows[0].ttl_seconds * 1000 : null;
         const now = new Date();
         console.log('Expires at:', expires_at);
         console.log('Current time:', now);
@@ -29,7 +30,7 @@ router.get('/p/:id', async (req, res) => {
         if (rows[0].ttl_seconds != null && now > new Date(expires_at)) {
             return res.status(404).send('Post has expired');
         }
-        const [updatedData] = await db.execute(updateQuery, [pasteId]);
+        const updatedData = await db.query(updateQuery, [pasteId]);
         const content = rows[0].content;        
         const filePath = path.join(__dirname, '../view/post_view.html');
         fs.readFile(filePath, 'utf8', (err, html) => {

@@ -1,18 +1,19 @@
-const mysql = require('mysql2/promise');
+// const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
-const db = mysql.createPool({
-    host : process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    database : process.env.DB_NAME || 'pastebin',
-    port: process.env.DB_PORT || 3306,
-    password : process.env.DB_PASSWORD || 'Alka@1009'
+const db = new Pool({
+    host : process.env.POSTGRES_HOST || 'localhost',
+    user: process.env.POSTGRES_USER || 'root',
+    database : process.env.POSTGRES_DATABASE || 'pastebin',
+    port: process.env.POSTGRES_PORT || 5432,
+    password : process.env.POSTGRES_PASSWORD || 'Alka@1009'
 })
 
 
 async function ping() {
-    const connection = await db.getConnection();
+    const connection = await db.connect();
     try {
-        await connection.ping();
+        await connection.query('SELECT 1');
         console.log('Database connection is healthy');
     } finally {
         connection.release();

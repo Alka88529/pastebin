@@ -14,17 +14,13 @@ router.post('/pastes', async (req, res) => {
     if(max_views != null && (isNaN(max_views) || max_views <= 0)) {
         return res.status(400).json({error: 'max_views must be a number and greater than 0'});
     }
-    const query = 'INSERT INTO posts (content, ttl_seconds, max_views) VALUES (?, ?, ?)';
+    const query = 'INSERT INTO posts (content, ttl_seconds, max_views) VALUES ($1, $2, $3)';
     try{
-        const [result] = await db.execute(query, [content, ttl_seconds || null, max_views || null], function(err) {
-            if(err) {
-                console.error('Error inserting paste:', err);
-                return res.status(500).json({error: 'save failed'});
-            }
-        });
+        const row = await db.query(query, [content, ttl_seconds || null, max_views || null]);
+        const result = row.rows[0]
         console.log('Paste saved with ID:', result);
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-        res.status(201).json({id: result.insertId, url: `${baseUrl}/p/${result.insertId}`});
+        res.status(201).json({id: result.id, url: `${baseUrl}/p/${result.id}`});
     }catch (error) {
         console.error('Error inserting paste:', error);
         return res.status(500).json({error: 'save failed error'+error});
@@ -34,11 +30,12 @@ router.post('/pastes', async (req, res) => {
 
 router.get('/pastes/:id', async (req, res) => {
     const pasteId = req.params.id;
-    const query = 'SELECT * FROM posts WHERE id = ?';  
-    const updateQuery = 'UPDATE posts SET max_views = max_views - 1 WHERE id = ? AND max_views IS NOT NULL AND max_views > 0'; 
+    const query = 'SELECT * FROM posts WHERE id = $1';  
+    const updateQuery = 'UPDATE posts SET max_views = max_views - 1 WHERE id = $1 AND max_views IS NOT NULL AND max_views > 0'; 
 
     try {
-        const [rows] = await db.execute(query, [pasteId]);
+        const result = await db.query(query, [pasteId]);
+        const rows = result.rows;
         if (rows.length === 0) {
             return res.status(404).json({error: 'Paste not found'});
         }
@@ -60,7 +57,7 @@ router.get('/pastes/:id', async (req, res) => {
         }
         console.log('Fetched paste:', rows[0]);
         console.log('Created at:', new Date(created_at).getTime());
-        const [updatedData] = await db.execute(updateQuery, [pasteId]);
+        const updatedData = await db.query(updateQuery, [pasteId]);
         res.status(200).json({content, remaining_views:max_views-1, expires_at});
     } catch (error) {
         console.error('Error fetching paste:', error);
