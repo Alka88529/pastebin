@@ -1,0 +1,20 @@
+{
+  "name": "pastebin",
+  "version": "1.0.0",
+  "description": "Pastebin-like web application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js"
+  },
+  "author": "Alka kumari",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "mysql2": "^3.16.0",
+    "sqlite3": "^5.1.7",
+    "vercel": "^50.1.5"
+  }
+}
