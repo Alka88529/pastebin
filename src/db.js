@@ -2,11 +2,8 @@
 const { Pool } = require('pg');
 
 const db = new Pool({
-    host : process.env.POSTGRES_HOST || 'localhost',
-    user: process.env.POSTGRES_USER || 'root',
-    database : process.env.POSTGRES_DATABASE || 'pastebin',
-    port: process.env.POSTGRES_PORT || 5432,
-    password : process.env.POSTGRES_PASSWORD || 'Alka@1009'
+    connectionString: process.env.POSTGRES_URL,
+    
 })
 
 
